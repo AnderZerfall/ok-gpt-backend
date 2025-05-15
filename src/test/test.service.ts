@@ -222,4 +222,8 @@ export class TestService {
 
     return this.updateByTestSessionId(sessionId, { score });
   }
+
+  getTestLink(id: string) {
+    return `${process.env.TEST_LINK_BASE}/test-session/${id}`;
+  }
 }

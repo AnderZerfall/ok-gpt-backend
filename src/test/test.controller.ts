@@ -105,4 +105,9 @@ export class TestController {
   ): Promise<TestSessionDto> {
     return this.testService.calculateTestScore(id, freeAnswers);
   }
+
+  @Get('get-link/:id')
+  getLinkToTheTest(@Param('id') id: string) {
+    return this.testService.getTestLink(id);
+  }
 }
