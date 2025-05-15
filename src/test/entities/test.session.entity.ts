@@ -13,6 +13,8 @@ export class TestSession {
 
   answers: UserAnswer[];
 
+  score: number;
+
   @Prop(Date)
   createdAt: Date;
 
@@ -25,3 +27,8 @@ export class TestSession {
 
 export type TestSessionDocument = TestSession & Document;
 export const TestSessionSchema = SchemaFactory.createForClass(TestSession);
+
+export interface FreeAnswerTestScore {
+  questionId: string;
+  score: number;
+}

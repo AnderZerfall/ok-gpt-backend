@@ -1,14 +1,22 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Test, TestDocument } from './entities/test.entity';
 import { Model } from 'mongoose';
 import { UpdatedTestDto } from './dto/updatedTestDto';
-import { UserAnswer } from './entities/user-answer.entity';
+import { UserAnswer, UserMultipleAnswer } from './entities/user-answer.entity';
 import {
+  FreeAnswerTestScore,
   TestSession,
   TestSessionDocument,
 } from './entities/test.session.entity';
-import { mapperTestToTestDto, TestDto } from './dto/TestDto';
+import { mapperTestToTestDto, TestDto } from './dto/testDto';
+import { QuestionType } from './entities/question.entity';
+import {
+  mapperTestSessionToDto,
+  TestSessionDto,
+  UpdatedTestSessionDto,
+} from './dto/testSessionDto';
 
 @Injectable()
 export class TestService {
@@ -20,7 +28,7 @@ export class TestService {
 
   async findAll(userId: number): Promise<TestDto[]> {
     const tests = await this.testModel
-      .find({ ownerId: userId, deleted_at: null })
+      .find({ ownerId: userId, deletedAt: null })
       .exec();
 
     return tests.map((test) => mapperTestToTestDto(test));
@@ -101,7 +109,7 @@ export class TestService {
   async deleteById(id: string): Promise<TestDto> {
     const deletedTest = await this.testModel.findByIdAndUpdate(
       { id, deleted_at: null },
-      { deleted_at: new Date() },
+      { deletedAt: new Date() },
       { runValidators: true },
     );
 
@@ -110,5 +118,108 @@ export class TestService {
     }
 
     return mapperTestToTestDto(deletedTest);
+  }
+
+  async findTestSessionById(sessionId: string): Promise<TestSessionDto> {
+    const testSession = await this.testSessionModel
+      .findById({ _id: sessionId, deleted_at: null })
+      .exec();
+
+    if (!testSession) {
+      throw new Error('Test session not found');
+    }
+
+    return mapperTestSessionToDto(testSession);
+  }
+
+  async findAllTestSessionsByTestId(testId: string): Promise<TestSessionDto[]> {
+    const testSessions = await this.testSessionModel
+      .find({ testId: testId, deleted_at: null })
+      .exec();
+
+    if (!testSessions) {
+      throw new Error('Test session not found');
+    }
+
+    return testSessions.map((session) => mapperTestSessionToDto(session));
+  }
+
+  async updateByTestSessionId(
+    sessionId: string,
+    updatedValues: UpdatedTestSessionDto,
+  ): Promise<TestSessionDto> {
+    const updatedTestSession = await this.testSessionModel
+      .findByIdAndUpdate({ id: sessionId, deleted_at: null }, updatedValues, {
+        runValidators: true,
+      })
+      .exec();
+
+    if (!updatedTestSession) {
+      throw new Error('Test session not found');
+    }
+
+    return mapperTestSessionToDto(updatedTestSession);
+  }
+
+  async calculateTestScore(
+    sessionId: string,
+    freeAnswers: FreeAnswerTestScore[] | null,
+  ): Promise<TestSessionDto> {
+    const testSession = await this.testSessionModel
+      .findOne({ id: sessionId })
+      .exec();
+
+    if (!testSession) {
+      throw new Error('Test session not found');
+    }
+
+    let score = 0;
+
+    const test = await this.findById(testSession.testId);
+
+    testSession.answers.map((answer) => {
+      const question =
+        test?.questions.find((question) => question.id === answer.questionId) ||
+        null;
+
+      if (question) {
+        switch (question.type) {
+          case QuestionType.oneChoice: {
+            if (question.rightAnswer === answer.answer) {
+              score += 1;
+            }
+
+            break;
+          }
+          case QuestionType.multipleChoice:
+            (answer as UserMultipleAnswer).answer.map(
+              (answer) =>
+                (score = question.rightAnswer.includes(answer)
+                  ? score + 1
+                  : score),
+            );
+            break;
+          case QuestionType.freeChoice:
+            if (freeAnswers) {
+              const freeAnswer = freeAnswers.find(
+                (freeAnswer) => freeAnswer.questionId === question.id,
+              );
+
+              if (freeAnswer) {
+                score += freeAnswer.score;
+              }
+
+              break;
+            }
+
+            throw new Error(
+              'Free answers are required for free choice questions',
+            );
+          default:
+        }
+      }
+    });
+
+    return this.updateByTestSessionId(sessionId, { score });
   }
 }

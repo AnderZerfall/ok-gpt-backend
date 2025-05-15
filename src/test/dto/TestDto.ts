@@ -1,4 +1,8 @@
-import { Question } from '../entities/question.entity';
+import {
+  Question,
+  QuestionMultipleChoice,
+  QuestionOneChoice,
+} from '../entities/question.entity';
 import { Test } from '../entities/test.entity';
 
 export interface TestDto {
@@ -6,10 +10,10 @@ export interface TestDto {
   name: string;
   ownerId: number;
   description: string;
-  questions: Question[];
+  questions: (Question | QuestionOneChoice | QuestionMultipleChoice)[];
   allowedUsers: string[];
-  deleted_at: Date | null;
-  updated_at: Date;
+  deletedAt: Date | null;
+  updatedAt: Date;
   timeLimit: number | null;
 }
 
@@ -21,9 +25,9 @@ export const mapperTestDtoToTest = (test: TestDto): Test => {
     questions: test.questions,
     ownerId: test.ownerId,
     allowedUsers: test.allowedUsers,
-    deleted_at: test.deleted_at,
-    created_at: test.updated_at,
-    updated_at: test.updated_at,
+    deletedAt: test.deletedAt,
+    createdAt: test.updatedAt,
+    updatedAt: test.updatedAt,
     timeLimit: test.timeLimit,
   };
 };
@@ -36,8 +40,8 @@ export const mapperTestToTestDto = (test: Test): TestDto => {
     questions: test.questions,
     allowedUsers: test.allowedUsers,
     ownerId: test.ownerId,
-    deleted_at: test.deleted_at,
-    updated_at: test.updated_at,
+    deletedAt: test.deletedAt,
+    updatedAt: test.updatedAt,
     timeLimit: test.timeLimit,
   };
 };

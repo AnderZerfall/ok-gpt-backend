@@ -2,7 +2,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from './entities/user.entity';
@@ -43,6 +47,7 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<{ access_token: string }> {
+    Logger.log(email, password);
     const user: User = await this.prismaService.user.create({
       data: { email, password },
     });

@@ -3,6 +3,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Question } from './question.entity';
 
+const EXPIRE_DATE = 1000 * 60 * 60 * 24 * 3;
 @Schema()
 export class Test {
   @Prop()
@@ -14,7 +15,7 @@ export class Test {
   @Prop()
   description: string;
 
-  @Prop(Question)
+  @Prop()
   questions: Question[];
 
   @Prop()
@@ -23,14 +24,19 @@ export class Test {
   @Prop(Number)
   ownerId: number;
 
-  @Prop({ type: Date, default: null, required: false })
-  deleted_at: Date | null;
+  @Prop({
+    type: Date,
+    default: null,
+    required: false,
+    index: { expires: EXPIRE_DATE },
+  })
+  deletedAt: Date | null;
 
   @Prop(Date)
-  created_at: Date;
+  createdAt: Date;
 
   @Prop(Date)
-  updated_at: Date;
+  updatedAt: Date;
 
   @Prop({ type: Number, default: null, required: false })
   timeLimit: number | null;

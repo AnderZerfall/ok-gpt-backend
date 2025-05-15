@@ -13,10 +13,14 @@ import { TestService } from './test.service';
 import { Test } from './entities/test.entity';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
 import { User } from 'src/auth/entities/user.entity';
-import { TestDto } from './dto/TestDto';
+import { TestDto } from './dto/testDto';
 import { UpdatedTestDto } from './dto/updatedTestDto';
-import { TestSession } from './entities/test.session.entity';
+import {
+  FreeAnswerTestScore,
+  TestSession,
+} from './entities/test.session.entity';
 import { UserAnswer } from './entities/user-answer.entity';
+import { TestSessionDto } from './dto/testSessionDto';
 
 @Controller('test')
 export class TestController {
@@ -56,7 +60,7 @@ export class TestController {
     );
   }
 
-  @Post()
+  @Post('start')
   startTest(
     @Body() currentParticipant: { testId: string; email: string },
   ): Promise<TestSession> {
@@ -68,7 +72,7 @@ export class TestController {
 
   @Post()
   endTest(
-    @Body()
+    @Body('end')
     submitTest: {
       testId: string;
       email: string;
@@ -80,5 +84,25 @@ export class TestController {
       submitTest.email,
       submitTest.answers,
     );
+  }
+
+  @Get('session/:id')
+  async getTestSessionById(@Param('id') id: string): Promise<TestSessionDto> {
+    return this.testService.findTestSessionById(id);
+  }
+
+  @Get('session/:testId')
+  async getAllTestSessionByTestId(
+    @Param('testId') testId: string,
+  ): Promise<TestSessionDto[]> {
+    return this.testService.findAllTestSessionsByTestId(testId);
+  }
+
+  @Post('session/:id')
+  async calculateTestSession(
+    @Param('id') id: string,
+    @Body() freeAnswers: FreeAnswerTestScore[],
+  ): Promise<TestSessionDto> {
+    return this.testService.calculateTestScore(id, freeAnswers);
   }
 }

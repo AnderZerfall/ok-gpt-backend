@@ -1,5 +1,17 @@
-export type UserAnswer = {
+import { QuestionType } from './question.entity';
+
+export interface BaseUserAnswer {
   questionId: string;
-  answer: string | string[];
-  isFreeChoice: boolean;
-};
+}
+
+export interface UserOneAnswer extends BaseUserAnswer {
+  type: QuestionType.oneChoice | QuestionType.freeChoice;
+  answer: string;
+}
+
+export interface UserMultipleAnswer extends BaseUserAnswer {
+  type: QuestionType.multipleChoice;
+  answer: string[];
+}
+
+export type UserAnswer = UserOneAnswer | UserMultipleAnswer;

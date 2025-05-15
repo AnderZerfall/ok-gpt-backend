@@ -1,42 +1,38 @@
 /* eslint-disable prettier/prettier */
 
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+export enum QuestionType {
+  oneChoice = 'oneChoice',
+  multipleChoice = 'multipleChoice',
+  freeChoice = 'freeChoice',
+}
 
-@Schema()
-export class Question {
-  @Prop()
+export interface BaseQuestion {
   id: string;
 
-  @Prop()
   question: string;
 }
 
-export type QuestionDocument = Question & Document;
-export const QuestionSchema = SchemaFactory.createForClass(Question);
+export interface QuestionFree extends BaseQuestion {
+  type: QuestionType.freeChoice;
+}
 
-@Schema()
-export class QuestionOneChoice extends Question {
-  @Prop()
+export interface QuestionOneChoice extends BaseQuestion {
   rightAnswer: string;
 
-  @Prop([String])
   options: string[];
+
+  type: QuestionType.oneChoice;
 }
 
-export type QuestionOneChoiceDocument = QuestionOneChoice & Document;
-export const QuestionOneChoiceSchema =
-  SchemaFactory.createForClass(QuestionOneChoice);
-
-@Schema()
-export class QuestionMultipleChoice extends Question {
-  @Prop([String])
+export interface QuestionMultipleChoice extends BaseQuestion {
   rightAnswer: string[];
 
-  @Prop([String])
   options: string[];
+
+  type: QuestionType.multipleChoice;
 }
 
-export type QuestionMultipleChoiceDocument = QuestionMultipleChoice & Document;
-export const QuestionMultipleChoiceSchema = SchemaFactory.createForClass(
-  QuestionMultipleChoice,
-);
+export type Question =
+  | QuestionFree
+  | QuestionOneChoice
+  | QuestionMultipleChoice;
