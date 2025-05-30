@@ -4,15 +4,18 @@ import { UserAnswer } from './user-answer.entity';
 @Schema()
 export class TestSession {
   @Prop()
-  id: string;
-
-  @Prop()
   testId: string;
 
-  userEmail: string;
+  @Prop()
+  email: string;
 
+  @Prop()
+  username: string;
+
+  @Prop()
   answers: UserAnswer[];
 
+  @Prop()
   score: number;
 
   @Prop(Date)

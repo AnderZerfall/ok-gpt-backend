@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Test, TestDocument } from './entities/test.entity';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { UpdatedTestDto } from './dto/updatedTestDto';
 import { UserAnswer, UserMultipleAnswer } from './entities/user-answer.entity';
 import {
@@ -10,13 +10,13 @@ import {
   TestSession,
   TestSessionDocument,
 } from './entities/test.session.entity';
-import { mapperTestToTestDto, TestDto } from './dto/testDto';
 import { QuestionType } from './entities/question.entity';
 import {
   mapperTestSessionToDto,
   TestSessionDto,
   UpdatedTestSessionDto,
 } from './dto/testSessionDto';
+import { mapDocumentToTest, TestDto } from './dto/testDto';
 
 @Injectable()
 export class TestService {
@@ -31,19 +31,23 @@ export class TestService {
       .find({ ownerId: userId, deletedAt: null })
       .exec();
 
-    return tests.map((test) => mapperTestToTestDto(test));
+    if (!tests) {
+      throw new NotFoundException('No test are available for this user');
+    }
+
+    return tests.map(mapDocumentToTest);
   }
 
   async findById(testId: string): Promise<TestDto> {
     const test = await this.testModel
-      .findById({ _id: testId, deleted_at: null })
+      .findOne({ _id: testId, deletedAt: null })
       .exec();
 
     if (!test) {
       throw new Error('Test not found');
     }
 
-    return mapperTestToTestDto(test);
+    return mapDocumentToTest(test);
   }
 
   async create(test: Test, ownerId: number): Promise<Test> {
@@ -56,7 +60,7 @@ export class TestService {
     updatedValues: UpdatedTestDto,
   ): Promise<TestDto> {
     const updatedTest = await this.testModel
-      .findByIdAndUpdate({ id: testId, deleted_at: null }, updatedValues, {
+      .findOneAndUpdate({ _id: testId, deletedAt: null }, updatedValues, {
         runValidators: true,
       })
       .exec();
@@ -65,15 +69,20 @@ export class TestService {
       throw new Error('Test not found');
     }
 
-    return mapperTestToTestDto(updatedTest);
+    return mapDocumentToTest(updatedTest);
   }
 
-  async startTest(testId: string, email: string): Promise<TestSession> {
+  async startTest(
+    testId: string,
+    email: string,
+    username: string,
+  ): Promise<TestSession> {
     const test = await this.findById(testId);
 
     const newTestSession = {
       testId: test._id,
-      userEmail: email,
+      username: username,
+      email: email,
       createdAt: new Date(),
       endedAt: null,
     };
@@ -94,35 +103,35 @@ export class TestService {
     };
 
     const testSession = await this.testSessionModel
-      .findByIdAndUpdate({ userEmail: email, testId }, updatedValues, {
-        runValidators: true,
-      })
+      .findOneAndUpdate({ email, testId }, updatedValues)
       .exec();
 
     if (!testSession) {
-      throw new Error('Test not found');
+      throw new Error('Test Session not found');
     }
 
     return testSession;
   }
 
   async deleteById(id: string): Promise<TestDto> {
-    const deletedTest = await this.testModel.findByIdAndUpdate(
-      { id, deleted_at: null },
+    const objectId = new Types.ObjectId(id);
+
+    const deletedTest = await this.testModel.findOneAndUpdate(
+      { _id: objectId, deletedAt: null },
       { deletedAt: new Date() },
-      { runValidators: true },
+      { new: true },
     );
 
     if (!deletedTest) {
       throw new Error('Test not found');
     }
 
-    return mapperTestToTestDto(deletedTest);
+    return mapDocumentToTest(deletedTest);
   }
 
   async findTestSessionById(sessionId: string): Promise<TestSessionDto> {
     const testSession = await this.testSessionModel
-      .findById({ _id: sessionId, deleted_at: null })
+      .findOne({ _id: new Types.ObjectId(sessionId), deletedAt: null })
       .exec();
 
     if (!testSession) {
@@ -133,8 +142,9 @@ export class TestService {
   }
 
   async findAllTestSessionsByTestId(testId: string): Promise<TestSessionDto[]> {
+    Logger.log(testId);
     const testSessions = await this.testSessionModel
-      .find({ testId: testId, deleted_at: null })
+      .find({ testId: testId, deletedAt: null })
       .exec();
 
     if (!testSessions) {
@@ -149,9 +159,13 @@ export class TestService {
     updatedValues: UpdatedTestSessionDto,
   ): Promise<TestSessionDto> {
     const updatedTestSession = await this.testSessionModel
-      .findByIdAndUpdate({ id: sessionId, deleted_at: null }, updatedValues, {
-        runValidators: true,
-      })
+      .findByIdAndUpdate(
+        { _id: new Types.ObjectId(sessionId), deletedAt: null },
+        updatedValues,
+        {
+          runValidators: true,
+        },
+      )
       .exec();
 
     if (!updatedTestSession) {
@@ -166,7 +180,7 @@ export class TestService {
     freeAnswers: FreeAnswerTestScore[] | null,
   ): Promise<TestSessionDto> {
     const testSession = await this.testSessionModel
-      .findOne({ id: sessionId })
+      .findOne({ _id: new Types.ObjectId(sessionId) })
       .exec();
 
     if (!testSession) {

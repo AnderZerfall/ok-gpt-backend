@@ -2,6 +2,7 @@ import { QuestionType } from './question.entity';
 
 export interface BaseUserAnswer {
   questionId: string;
+  question: string;
 }
 
 export interface UserOneAnswer extends BaseUserAnswer {

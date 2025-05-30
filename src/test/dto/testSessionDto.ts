@@ -1,10 +1,11 @@
-import { TestSession } from '../entities/test.session.entity';
+import { Types } from 'mongoose';
+import { TestSessionDocument } from '../entities/test.session.entity';
 import { UserAnswer } from '../entities/user-answer.entity';
 
 export interface TestSessionDto {
   _id: string;
   testId: string;
-  userEmail: string;
+  email: string;
   answers: UserAnswer[];
   score: number;
   createdAt: Date;
@@ -13,7 +14,7 @@ export interface TestSessionDto {
 }
 
 export interface UpdatedTestSessionDto {
-  userEmail?: string;
+  email?: string;
   answers?: UserAnswer[];
   score?: number;
   createdAt?: Date;
@@ -21,28 +22,13 @@ export interface UpdatedTestSessionDto {
   deletedAt?: Date | null;
 }
 
-export const mapperDtoToTestSession = (
-  session: TestSessionDto,
-): TestSession => {
-  return {
-    id: session._id,
-    testId: session.testId,
-    userEmail: session.userEmail,
-    answers: session.answers,
-    score: session.score,
-    deletedAt: session.deletedAt,
-    endedAt: session.endedAt,
-    createdAt: session.createdAt,
-  };
-};
-
 export const mapperTestSessionToDto = (
-  session: TestSession,
+  session: TestSessionDocument & { _id: Types.ObjectId },
 ): TestSessionDto => {
   return {
-    _id: session.id,
+    _id: session._id.toString(),
     testId: session.testId,
-    userEmail: session.userEmail,
+    email: session.email,
     answers: session.answers,
     score: session.score,
     deletedAt: session.deletedAt,

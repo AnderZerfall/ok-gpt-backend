@@ -7,9 +7,6 @@ const EXPIRE_DATE = 1000 * 60 * 60 * 24 * 3;
 @Schema()
 export class Test {
   @Prop()
-  id: string;
-
-  @Prop()
   name: string;
 
   @Prop()

@@ -1,9 +1,10 @@
+import { Types } from 'mongoose';
 import {
   Question,
   QuestionMultipleChoice,
   QuestionOneChoice,
 } from '../entities/question.entity';
-import { Test } from '../entities/test.entity';
+import { TestDocument } from '../entities/test.entity';
 
 export interface TestDto {
   _id: string;
@@ -17,24 +18,11 @@ export interface TestDto {
   timeLimit: number | null;
 }
 
-export const mapperTestDtoToTest = (test: TestDto): Test => {
+export const mapDocumentToTest = (
+  test: TestDocument & { _id: Types.ObjectId },
+): TestDto => {
   return {
-    id: test._id,
-    name: test.name,
-    description: test.description,
-    questions: test.questions,
-    ownerId: test.ownerId,
-    allowedUsers: test.allowedUsers,
-    deletedAt: test.deletedAt,
-    createdAt: test.updatedAt,
-    updatedAt: test.updatedAt,
-    timeLimit: test.timeLimit,
-  };
-};
-
-export const mapperTestToTestDto = (test: Test): TestDto => {
-  return {
-    _id: test.id,
+    _id: test._id.toString(),
     name: test.name,
     description: test.description,
     questions: test.questions,

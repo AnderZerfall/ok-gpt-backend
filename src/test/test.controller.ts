@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -50,7 +51,7 @@ export class TestController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post()
+  @Patch()
   update(
     @Body() updatedValues: { testId: string; updatedValues: UpdatedTestDto },
   ): Promise<TestDto> {
@@ -62,17 +63,23 @@ export class TestController {
 
   @Post('start')
   startTest(
-    @Body() currentParticipant: { testId: string; email: string },
+    @Body()
+    currentParticipant: {
+      testId: string;
+      email: string;
+      username: string;
+    },
   ): Promise<TestSession> {
     return this.testService.startTest(
       currentParticipant.testId,
       currentParticipant.email,
+      currentParticipant.username,
     );
   }
 
-  @Post()
+  @Post('submit')
   endTest(
-    @Body('end')
+    @Body()
     submitTest: {
       testId: string;
       email: string;
@@ -91,14 +98,14 @@ export class TestController {
     return this.testService.findTestSessionById(id);
   }
 
-  @Get('session/:testId')
+  @Get('session/test/:testId')
   async getAllTestSessionByTestId(
     @Param('testId') testId: string,
   ): Promise<TestSessionDto[]> {
     return this.testService.findAllTestSessionsByTestId(testId);
   }
 
-  @Post('session/:id')
+  @Post('session/calculate/:id')
   async calculateTestSession(
     @Param('id') id: string,
     @Body() freeAnswers: FreeAnswerTestScore[],
